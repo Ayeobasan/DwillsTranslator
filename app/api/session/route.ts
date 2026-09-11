@@ -6,10 +6,10 @@ export async function POST(req: NextRequest) {
     const apiKey = body.apiKey || process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         hasApiKey: false,
         fallbackRequired: true,
-        message: 'OPENAI_API_KEY is unconfigured. Free WebSpeech + Google Translate fallback mode is active.' 
+        message: 'OPENAI_API_KEY is unconfigured. Free WebSpeech + Google Translate fallback mode is active.'
       }, { status: 200 });
     }
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
     const systemPrompt = direction === 'en-to-fr'
       ? `You are an instantaneous simultaneous voice interpreter from English to French. 
-RULES:
+RULES :
 1. Translate incoming English speech into French IMMEDIATELY as audio and text.
 2. Keep translations concise, direct, natural, and conversational.
 3. Do NOT add pleasantries or extra comments. Translate ONLY what the user said.
@@ -57,10 +57,10 @@ RULES:
       const errorText = await response.text();
       console.error('OpenAI Realtime session error:', response.status, errorText);
       return NextResponse.json(
-        { 
+        {
           error: `OpenAI API returned status ${response.status}`,
           details: errorText,
-          fallbackRequired: true 
+          fallbackRequired: true
         },
         { status: response.status }
       );
