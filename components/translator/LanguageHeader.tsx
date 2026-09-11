@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowLeftRight, Settings, Sparkles, Volume2 } from 'lucide-react';
+import { ArrowLeftRight, Settings, Radio, Sparkles, AudioWaveform } from 'lucide-react';
 import { EngineType, LanguageDirection, TranslationMode } from '@/lib/types/translator';
 
 interface LanguageHeaderProps {
@@ -30,68 +30,77 @@ export const LanguageHeader: React.FC<LanguageHeaderProps> = ({
   };
 
   return (
-    <header className="w-full bg-slate-900/60 backdrop-blur-xl border-b border-slate-800/80 sticky top-0 z-20 px-4 py-3 sm:px-6">
-      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+    <header className="w-full bg-slate-950/80 backdrop-blur-2xl border-b border-slate-800/80 sticky top-0 z-30 px-4 py-3.5 sm:px-8">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         
-        {/* Brand & Status */}
+        {/* Left: Brand Identity */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 p-0.5 shadow-lg shadow-indigo-500/20">
-            <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-              <Volume2 className="w-5 h-5 text-indigo-400" />
-            </div>
+          <div className="w-10 h-10 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-inner relative group">
+            <AudioWaveform className="w-5 h-5 text-indigo-400 transition-transform group-hover:scale-110" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-4 ring-slate-950" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-              Instant Translator
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-indigo-500/10 border border-indigo-500/30 text-indigo-300">
-                {engine === 'openai-realtime' ? 'WebRTC Realtime' : 'WebSpeech Fallback'}
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-semibold tracking-tight text-slate-100">
+                LingoStream Live
+              </h1>
+              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-indigo-300">
+                {engine === 'openai-realtime' ? 'WebRTC Low-Latency' : 'Free WebSpeech Mode'}
               </span>
-            </h1>
-            <p className="text-xs text-slate-400">Zero-latency simultaneous English ↔ French interpretation</p>
+            </div>
+            <p className="text-xs text-slate-400 font-normal">Real-Time Conversational Interpreter</p>
           </div>
         </div>
 
-        {/* Direction Switcher Banner */}
-        <div className="flex items-center gap-3 bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800 shadow-inner">
+        {/* Center: Language Segment Switcher */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-2xl border border-slate-800/90 shadow-2xl">
           <button
             onClick={() => onDirectionChange('en-to-fr')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-medium text-xs transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
               isEnToFr
-                ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <span className="text-base">🇬🇧</span> English → <span className="text-base">🇫🇷</span> French
+            <span className="text-sm">🇬🇧</span>
+            <span>English</span>
+            <span className="text-slate-400">→</span>
+            <span className="text-sm">🇫🇷</span>
+            <span>Français</span>
           </button>
 
           <button
             onClick={handleToggleDirection}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
             title="Swap translation direction"
           >
-            <ArrowLeftRight className="w-4 h-4" />
+            <ArrowLeftRight className="w-3.5 h-3.5" />
           </button>
 
           <button
             onClick={() => onDirectionChange('fr-to-en')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-medium text-xs transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium transition-all ${
               !isEnToFr
-                ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-500/20'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
             }`}
           >
-            <span className="text-base">🇫🇷</span> French → <span className="text-base">🇬🇧</span> English
+            <span className="text-sm">🇫🇷</span>
+            <span>Français</span>
+            <span className="text-slate-400">→</span>
+            <span className="text-sm">🇬🇧</span>
+            <span>English</span>
           </button>
         </div>
 
-        {/* Mode Selector & Settings Button */}
-        <div className="flex items-center gap-2">
-          <div className="flex bg-slate-950/70 p-1 rounded-xl border border-slate-800 text-xs">
+        {/* Right: Mode & Config */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs">
             <button
               onClick={() => onModeChange('conversation')}
-              className={`px-3 py-1 rounded-lg font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                 mode === 'conversation'
-                  ? 'bg-slate-800 text-indigo-300 shadow-sm'
+                  ? 'bg-slate-800 text-slate-100 shadow-sm border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -99,24 +108,24 @@ export const LanguageHeader: React.FC<LanguageHeaderProps> = ({
             </button>
             <button
               onClick={() => onModeChange('push-to-talk')}
-              className={`px-3 py-1 rounded-lg font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                 mode === 'push-to-talk'
-                  ? 'bg-slate-800 text-indigo-300 shadow-sm'
+                  ? 'bg-slate-800 text-slate-100 shadow-sm border border-slate-700/60'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Push-to-Talk
+              Push-To-Talk
             </button>
           </div>
 
           <button
             onClick={onOpenSettings}
-            className="relative p-2 rounded-xl bg-slate-800/60 border border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-800 transition-all"
-            title="Settings & API Key"
+            className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 transition-all relative"
+            title="Settings"
           >
             <Settings className="w-4 h-4" />
             {!hasApiKey && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
             )}
           </button>
         </div>

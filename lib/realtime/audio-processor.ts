@@ -80,8 +80,8 @@ export class AudioProcessor {
         this.callbacks.onVolumeChange(normalizedVolume);
       }
 
-      // Simple VAD threshold
-      const speechThreshold = 0.15;
+      // Sharp VAD threshold & quick silence timeout
+      const speechThreshold = 0.08;
       if (normalizedVolume > speechThreshold) {
         if (!this.isSpeaking) {
           this.isSpeaking = true;
@@ -100,7 +100,7 @@ export class AudioProcessor {
             this.callbacks.onSpeechEnded();
           }
           this.speechSilenceTimer = null;
-        }, 600);
+        }, 300);
       }
 
       this.animFrameId = requestAnimationFrame(checkVolume);

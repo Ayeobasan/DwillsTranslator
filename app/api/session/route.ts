@@ -6,14 +6,11 @@ export async function POST(req: NextRequest) {
     const apiKey = body.apiKey || process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json(
-        { 
-          error: 'OPENAI_API_KEY is missing.',
-          hasApiKey: false,
-          fallbackRequired: true 
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ 
+        hasApiKey: false,
+        fallbackRequired: true,
+        message: 'OPENAI_API_KEY is unconfigured. Free WebSpeech + Google Translate fallback mode is active.' 
+      }, { status: 200 });
     }
 
     const direction: 'en-to-fr' | 'fr-to-en' = body.direction || 'en-to-fr';
@@ -48,9 +45,9 @@ RULES:
         output_audio_format: 'pcm16',
         turn_detection: {
           type: 'server_vad',
-          threshold: 0.5,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 500,
+          threshold: 0.4,
+          prefix_padding_ms: 200,
+          silence_duration_ms: 350,
         },
       }),
     });

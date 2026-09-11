@@ -83,6 +83,10 @@ export class WebSpeechFallbackEngine {
         (window as unknown as { SpeechRecognition?: new () => ISpeechRecognition }).SpeechRecognition ||
         (window as unknown as { webkitSpeechRecognition?: new () => ISpeechRecognition }).webkitSpeechRecognition;
 
+      if (!SpeechRecognitionClass) {
+        throw new Error('Speech recognition class unavailable');
+      }
+
       this.recognition = new SpeechRecognitionClass();
       this.recognition.continuous = true;
       this.recognition.interimResults = true;
@@ -227,22 +231,60 @@ export class WebSpeechFallbackEngine {
 
   private speakBrowserSynthesis(text: string) {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = this.direction === 'en-to-fr' ? 'fr-FR' : 'en-US';
-    utterance.rate = 1.0;
+    try {
+      window.speechSynthesis.resume();
+      window.speechSynthesis.cancel();
 
-    window.speechSynthesis.speak(utterance);
+      const utterance = new SpeechSynthesisUtterance(text);
+      const targetLangPrefix = this.direction === 'en-to-fr' ? 'fr' : 'en';
+      utterance.lang = this.direction === 'en-to-fr' ? 'fr-FR' : 'en-US';
+      utterance.rate = 1.0;
+      utterance.volume = 1.0;
+
+      // Select explicit matching voice if available
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const matched = voices.find(
+          (v) => v.lang.toLowerCase().startsWith(targetLangPrefix) || v.lang.toLowerCase().includes(targetLangPrefix)
+        );
+        if (matched) {
+          utterance.voice = matched;
+        }
+      }
+
+      utterance.onstart = () => {
+        this.notifyState('playing');
+      };
+
+      utterance.onend = () => {
+        this.notifyState('listening');
+      };
+
+      utterance.onerror = (err) => {
+        console.warn('SpeechSynthesis utterance notice:', err);
+        this.notifyState('listening');
+      };
+
+      // Keep utterance reference globally to avoid Chrome garbage collection bug
+      (window as unknown as { _activeUtterance?: SpeechSynthesisUtterance })._activeUtterance = utterance;
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.error('Speech synthesis error:', e);
+      this.notifyState('listening');
+    }
   }
 
-  public handleBargeIn() {
-    if (this.currentAudioElement) {
-      this.currentAudioElement.pause();
-      this.currentAudioElement = null;
-    }
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+  public handleBargeIn(force = false) {
+    if (force) {
+      if (this.currentAudioElement) {
+        this.currentAudioElement.pause();
+        this.currentAudioElement = null;
+      }
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
     }
   }
 
