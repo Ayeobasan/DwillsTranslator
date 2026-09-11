@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
+    // okok 
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
