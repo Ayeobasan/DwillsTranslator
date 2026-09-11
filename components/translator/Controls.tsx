@@ -20,6 +20,7 @@ interface ControlsProps {
 export const Controls: React.FC<ControlsProps> = ({
   mode,
   connectionState,
+  direction,
   onDirectionChange,
   onStartListening,
   onStopListening,

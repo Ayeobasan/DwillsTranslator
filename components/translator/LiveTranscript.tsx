@@ -68,7 +68,7 @@ export const LiveTranscript: React.FC<LiveTranscriptProps> = ({
 
             {liveOriginalText && (
               <p className="text-orange-300 font-light italic transition-opacity">
-                &quot;{liveOriginalText}&quot;
+                "{liveOriginalText}"
               </p>
             )}
 
@@ -122,7 +122,7 @@ export const LiveTranscript: React.FC<LiveTranscriptProps> = ({
 
             {liveTranslatedText && (
               <p className="text-orange-200 font-light italic transition-opacity">
-                &quot;{liveTranslatedText}&quot;
+                "{liveTranslatedText}"
               </p>
             )}
 
