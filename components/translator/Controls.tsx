@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mic, Square, Zap, RefreshCw, AlertCircle, Radio } from 'lucide-react';
+import { Mic, Square, Zap, RefreshCw, AlertCircle } from 'lucide-react';
 import { ConnectionState, LanguageDirection, LatencyMetrics, TranslationMode } from '@/lib/types/translator';
 
 interface ControlsProps {
@@ -31,25 +31,24 @@ export const Controls: React.FC<ControlsProps> = ({
 }) => {
   const [isPttPressed, setIsPttPressed] = useState<LanguageDirection | null>(null);
 
-  const isListening = connectionState === 'listening' || connectionState === 'connected';
   const isActive = connectionState !== 'idle' && connectionState !== 'error';
 
   const getStateBadge = () => {
     switch (connectionState) {
       case 'connecting':
-        return { text: 'Establishing secure session...', color: 'bg-amber-500/10 text-amber-300 border-amber-500/30' };
+        return { text: 'Establishing Dwill Translate Session...', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
       case 'listening':
-        return { text: 'Listening for speech...', color: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' };
+        return { text: 'Listening for Speech...', color: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' };
       case 'translating':
-        return { text: 'Streaming translation...', color: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30' };
+        return { text: 'Streaming Dwill Translation...', color: 'bg-orange-500/10 text-orange-400 border-orange-500/30' };
       case 'playing':
-        return { text: 'Speaking translation...', color: 'bg-purple-500/10 text-purple-300 border-purple-500/30' };
+        return { text: 'Speaking Translation...', color: 'bg-orange-500/10 text-orange-300 border-orange-500/30' };
       case 'reconnecting':
         return { text: 'Reconnecting session...', color: 'bg-rose-500/10 text-rose-300 border-rose-500/30' };
       case 'error':
         return { text: errorMessage || 'Connection error', color: 'bg-rose-500/10 text-rose-300 border-rose-500/30' };
       default:
-        return { text: 'Ready — Click to start continuous mode', color: 'bg-slate-900 text-slate-400 border-slate-800' };
+        return { text: 'Ready — Click below to speak', color: 'bg-zinc-900 text-zinc-400 border-zinc-800' };
     }
   };
 
@@ -71,7 +70,7 @@ export const Controls: React.FC<ControlsProps> = ({
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-5 my-6 px-4">
       
-      {/* Human Readable Status Bar */}
+      {/* Status Bar */}
       <div className="flex items-center gap-3">
         <div className={`px-4 py-1.5 rounded-full border text-xs font-medium flex items-center gap-2 shadow-sm ${statusBadge.color}`}>
           {connectionState === 'connecting' && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
@@ -81,7 +80,7 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
 
         {latencyMetrics && latencyMetrics.totalMs > 0 && (
-          <div className="px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-indigo-300 text-xs font-mono flex items-center gap-1.5 shadow-sm">
+          <div className="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-orange-400 text-xs font-mono flex items-center gap-1.5 shadow-sm">
             <Zap className="w-3.5 h-3.5 text-amber-400" />
             <span>{latencyMetrics.totalMs}ms latency</span>
           </div>
@@ -94,17 +93,17 @@ export const Controls: React.FC<ControlsProps> = ({
           {!isActive ? (
             <button
               onClick={onStartListening}
-              className="group relative flex items-center gap-3 px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-xl shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all duration-200"
+              className="group relative flex items-center gap-3 px-9 py-4 rounded-2xl bg-gradient-to-r from-orange-600 via-orange-500 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-sm shadow-xl shadow-orange-600/30 hover:scale-105 active:scale-95 transition-all duration-200"
             >
-              <div className="w-7 h-7 rounded-xl bg-white/10 flex items-center justify-center">
-                <Mic className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                <Mic className="w-4.5 h-4.5 text-white" />
               </div>
-              <span>Start Continuous Mode</span>
+              <span>Start Dwill Conversation</span>
             </button>
           ) : (
             <button
               onClick={onStopListening}
-              className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm shadow-xl shadow-rose-600/20 hover:scale-105 active:scale-95 transition-all duration-200 border border-rose-400/30"
+              className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-xl shadow-rose-600/20 hover:scale-105 active:scale-95 transition-all duration-200 border border-rose-400/30"
             >
               <Square className="w-4 h-4 text-white fill-current" />
               <span>Stop Session</span>
@@ -125,16 +124,16 @@ export const Controls: React.FC<ControlsProps> = ({
             onTouchEnd={handlePttMouseUp}
             className={`flex flex-col items-center justify-center gap-2 p-6 rounded-3xl border transition-all duration-150 select-none shadow-xl ${
               isPttPressed === 'en-to-fr'
-                ? 'bg-indigo-600 border-indigo-400 text-white scale-95 shadow-indigo-500/30'
-                : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-200 hover:bg-slate-850'
+                ? 'bg-gradient-to-br from-orange-600 to-amber-600 border-orange-400 text-white scale-95 shadow-orange-600/40'
+                : 'bg-zinc-900 border-zinc-800 hover:border-orange-500/50 text-white hover:bg-zinc-850'
             }`}
           >
-            <div className="flex items-center gap-2 text-base font-semibold">
+            <div className="flex items-center gap-2 text-base font-bold">
               <span>🇬🇧</span>
               <span>Speak English</span>
             </div>
-            <span className="text-xs text-slate-400">Translates to French 🇫🇷</span>
-            <div className="mt-2 text-[11px] px-3 py-1 rounded-full bg-slate-950/80 border border-slate-800 text-slate-400 font-mono">
+            <span className="text-xs text-zinc-400">Translates to French 🇫🇷</span>
+            <div className="mt-2 text-[11px] px-3 py-1 rounded-full bg-zinc-950/80 border border-zinc-800 text-zinc-400 font-mono">
               {isPttPressed === 'en-to-fr' ? 'Recording... Release to Finish' : 'Hold / Tap to Speak'}
             </div>
           </button>
@@ -147,16 +146,16 @@ export const Controls: React.FC<ControlsProps> = ({
             onTouchEnd={handlePttMouseUp}
             className={`flex flex-col items-center justify-center gap-2 p-6 rounded-3xl border transition-all duration-150 select-none shadow-xl ${
               isPttPressed === 'fr-to-en'
-                ? 'bg-indigo-600 border-indigo-400 text-white scale-95 shadow-indigo-500/30'
-                : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-200 hover:bg-slate-850'
+                ? 'bg-gradient-to-br from-orange-600 to-amber-600 border-orange-400 text-white scale-95 shadow-orange-600/40'
+                : 'bg-zinc-900 border-zinc-800 hover:border-orange-500/50 text-white hover:bg-zinc-850'
             }`}
           >
-            <div className="flex items-center gap-2 text-base font-semibold">
+            <div className="flex items-center gap-2 text-base font-bold">
               <span>🇫🇷</span>
               <span>Parler Français</span>
             </div>
-            <span className="text-xs text-slate-400">Translates to English 🇬🇧</span>
-            <div className="mt-2 text-[11px] px-3 py-1 rounded-full bg-slate-950/80 border border-slate-800 text-slate-400 font-mono">
+            <span className="text-xs text-zinc-400">Translates to English 🇬🇧</span>
+            <div className="mt-2 text-[11px] px-3 py-1 rounded-full bg-zinc-950/80 border border-zinc-800 text-zinc-400 font-mono">
               {isPttPressed === 'fr-to-en' ? 'Enregistrement... Relâcher' : 'Maintenir pour Parler'}
             </div>
           </button>

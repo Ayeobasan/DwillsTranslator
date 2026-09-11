@@ -47,17 +47,15 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
             const val = dataArray[i * 2] || 0;
             barHeight = Math.max(4, (val / 255) * height);
           } else {
-            // Animated fallback pulse wave
             const time = Date.now() / 150;
             barHeight = Math.max(4, Math.sin(time + i * 0.4) * (height / 2) + (height / 2));
           }
         }
 
-        // Gradient color depending on state
         const gradient = ctx.createLinearGradient(0, height, 0, 0);
         if (state === 'playing' || state === 'translating') {
-          gradient.addColorStop(0, '#818cf8'); // Indigo
-          gradient.addColorStop(1, '#c084fc'); // Purple
+          gradient.addColorStop(0, '#ea580c'); // Deep Orange
+          gradient.addColorStop(1, '#f97316'); // Bright Orange
         } else {
           gradient.addColorStop(0, '#10b981'); // Emerald
           gradient.addColorStop(1, '#34d399'); // Mint
@@ -87,7 +85,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
         ref={canvasRef}
         width={320}
         height={36}
-        className="w-full max-w-xs h-9 rounded-xl bg-slate-950/60 border border-slate-800/80 px-2"
+        className="w-full max-w-xs h-9 rounded-xl bg-zinc-950/80 border border-zinc-800 px-2"
       />
     </div>
   );

@@ -245,10 +245,10 @@ export const TranslatorContainer: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white relative overflow-x-hidden">
+    <div className="min-h-screen flex flex-col justify-between bg-zinc-950 text-white font-sans selection:bg-orange-500 selection:text-white relative overflow-x-hidden">
       
-      {/* Background Glow Accents */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-indigo-900/20 via-purple-950/10 to-transparent blur-3xl pointer-events-none -z-10" />
+      {/* Deep Orange Background Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-orange-950/25 via-amber-950/10 to-transparent blur-3xl pointer-events-none -z-10" />
 
       {/* Navigation Header */}
       <LanguageHeader
@@ -306,8 +306,8 @@ export const TranslatorContainer: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-4 text-center text-xs text-slate-500 border-t border-slate-900">
-        Continuous English ↔ French Real-Time Voice Interpreter • Powered by OpenAI Realtime WebRTC
+      <footer className="w-full py-4 text-center text-xs text-zinc-500 border-t border-zinc-900">
+        Dwill Translate • Real-Time English ↔ French Voice Interpreter
       </footer>
 
       {/* Settings Modal */}
