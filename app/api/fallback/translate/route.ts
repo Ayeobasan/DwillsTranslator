@@ -43,29 +43,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // FREE TRANSLATION PROVIDER 1: MyMemory Public Translation API (No Key Required)
+    // FREE TRANSLATION PROVIDER 1: Google Translate Public Client Endpoint (Ultra-Fast 50ms-100ms)
     const sl = direction === 'en-to-fr' ? 'en' : 'fr';
     const tl = direction === 'en-to-fr' ? 'fr' : 'en';
 
-    try {
-      const myMemoryRes = await fetch(
-        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sl}|${tl}`
-      );
-      if (myMemoryRes.ok) {
-        const mmData = await myMemoryRes.json();
-        if (mmData.responseData?.translatedText) {
-          return NextResponse.json({
-            translatedText: mmData.responseData.translatedText,
-            provider: 'mymemory-free',
-            isFree: true,
-          });
-        }
-      }
-    } catch (e) {
-      console.warn('MyMemory free translation failed, trying Google Translate free endpoint:', e);
-    }
-
-    // FREE TRANSLATION PROVIDER 2: Google Translate Public Client Endpoint (No Key Required)
     try {
       const gRes = await fetch(
         `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sl}&tl=${tl}&dt=t&q=${encodeURIComponent(text)}`
@@ -82,7 +63,26 @@ export async function POST(req: NextRequest) {
         }
       }
     } catch (e) {
-      console.warn('Google free translation failed:', e);
+      console.warn('Google free translation failed, trying MyMemory fallback:', e);
+    }
+
+    // FREE TRANSLATION PROVIDER 2: MyMemory Public Translation API Fallback
+    try {
+      const myMemoryRes = await fetch(
+        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sl}|${tl}`
+      );
+      if (myMemoryRes.ok) {
+        const mmData = await myMemoryRes.json();
+        if (mmData.responseData?.translatedText) {
+          return NextResponse.json({
+            translatedText: mmData.responseData.translatedText,
+            provider: 'mymemory-free',
+            isFree: true,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('MyMemory free translation failed:', e);
     }
 
     // Fallback dictionary
