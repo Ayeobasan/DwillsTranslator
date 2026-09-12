@@ -51,6 +51,9 @@ export class WebSpeechFallbackEngine {
   private isRunning = false;
   private currentAudioElement: HTMLAudioElement | null = null;
   private userApiKey?: string;
+  private phraseDebounceTimer: NodeJS.Timeout | null = null;
+  private lastProcessedText = '';
+  private isSpeakingAudio = false;
 
   constructor(callbacks?: WebSpeechFallbackCallbacks) {
     if (callbacks) {
@@ -66,7 +69,28 @@ export class WebSpeechFallbackEngine {
     );
   }
 
+  public primeAudio() {
+    if (typeof window === 'undefined') return;
+    try {
+      if (!this.currentAudioElement) {
+        this.currentAudioElement = new Audio();
+      }
+      // Play silent WAV data URI to unlock mobile iOS Safari / Android Chrome audio context
+      this.currentAudioElement.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+      this.currentAudioElement.play().then(() => {
+        this.currentAudioElement?.pause();
+      }).catch(() => {});
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.resume();
+      }
+    } catch (e) {
+      console.warn('Mobile audio priming notice:', e);
+    }
+  }
+
   public async start(direction: LanguageDirection, userApiKey?: string): Promise<boolean> {
+    this.primeAudio();
     if (!this.isSupported()) {
       if (this.callbacks.onError) {
         this.callbacks.onError('WebSpeech API is not supported in this browser environment.');
@@ -97,6 +121,8 @@ export class WebSpeechFallbackEngine {
       };
 
       this.recognition.onresult = async (event: ISpeechRecognitionEvent) => {
+        if (this.isSpeakingAudio) return;
+
         let interimTranscript = '';
         let finalTranscript = '';
 
@@ -109,15 +135,38 @@ export class WebSpeechFallbackEngine {
           }
         }
 
-        if (interimTranscript && this.callbacks.onTranscriptDelta) {
-          this.callbacks.onTranscriptDelta('user', interimTranscript);
+        const currentSpeech = (finalTranscript || interimTranscript).trim();
+
+        if (currentSpeech && this.callbacks.onTranscriptDelta) {
+          this.callbacks.onTranscriptDelta('user', currentSpeech);
+        }
+
+        if (this.phraseDebounceTimer) {
+          clearTimeout(this.phraseDebounceTimer);
+          this.phraseDebounceTimer = null;
         }
 
         if (finalTranscript.trim()) {
-          if (this.callbacks.onTranscriptFinal) {
-            this.callbacks.onTranscriptFinal('user', finalTranscript.trim(), this.direction);
+          const textToTranslate = finalTranscript.trim();
+          if (textToTranslate !== this.lastProcessedText) {
+            this.lastProcessedText = textToTranslate;
+            if (this.callbacks.onTranscriptFinal) {
+              this.callbacks.onTranscriptFinal('user', textToTranslate, this.direction);
+            }
+            this.processTranslationAndTTS(textToTranslate);
           }
-          await this.processTranslationAndTTS(finalTranscript.trim());
+        } else if (interimTranscript.trim() && interimTranscript.trim().length > 2) {
+          // Instantaneous 350ms pause trigger for zero-perceived latency
+          this.phraseDebounceTimer = setTimeout(() => {
+            const textToTranslate = interimTranscript.trim();
+            if (textToTranslate !== this.lastProcessedText) {
+              this.lastProcessedText = textToTranslate;
+              if (this.callbacks.onTranscriptFinal) {
+                this.callbacks.onTranscriptFinal('user', textToTranslate, this.direction);
+              }
+              this.processTranslationAndTTS(textToTranslate);
+            }
+          }, 350);
         }
       };
 
@@ -129,14 +178,13 @@ export class WebSpeechFallbackEngine {
       };
 
       this.recognition.onend = () => {
-        if (this.isRunning && this.recognition) {
-          // Restart loop for continuous speech recognition
+        if (this.isRunning && this.recognition && !this.isSpeakingAudio) {
           try {
             this.recognition.start();
           } catch (e) {
             console.warn('Could not auto-restart recognition:', e);
           }
-        } else {
+        } else if (!this.isSpeakingAudio) {
           this.notifyState('idle');
         }
       };
@@ -183,17 +231,19 @@ export class WebSpeechFallbackEngine {
         this.callbacks.onTranscriptFinal('translator', translatedText, this.direction);
       }
 
-      // 2. TTS Generation / Playback
+      // 2. Stream Audio Playback (OpenAI Neural TTS or Google Free Neural Audio)
       this.notifyState('playing');
+      this.pauseListeningForAudio();
       const voice = this.direction === 'en-to-fr' ? 'alloy' : 'shimmer';
 
-      if (this.userApiKey) {
+      try {
         const ttsRes = await fetch('/api/fallback/tts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text: translatedText,
             voice,
+            direction: this.direction,
             apiKey: this.userApiKey,
           }),
         });
@@ -201,12 +251,22 @@ export class WebSpeechFallbackEngine {
         if (ttsRes.ok) {
           const blob = await ttsRes.blob();
           const audioUrl = URL.createObjectURL(blob);
-          this.currentAudioElement = new Audio(audioUrl);
+
+          if (!this.currentAudioElement) {
+            this.currentAudioElement = new Audio();
+          }
+
+          this.currentAudioElement.src = audioUrl;
+          this.currentAudioElement.onended = () => {
+            this.resumeListeningAfterAudio();
+          };
+
           await this.currentAudioElement.play();
         } else {
           this.speakBrowserSynthesis(translatedText);
         }
-      } else {
+      } catch (audioErr) {
+        console.warn('Network TTS stream failed, attempting browser synthesis fallback:', audioErr);
         this.speakBrowserSynthesis(translatedText);
       }
 
@@ -221,18 +281,38 @@ export class WebSpeechFallbackEngine {
           lastUpdated: Date.now(),
         });
       }
-
-      this.notifyState('listening');
     } catch (err: unknown) {
       console.error('Fallback processing error:', err);
-      this.notifyState('listening');
+      this.resumeListeningAfterAudio();
     }
+  }
+
+  private pauseListeningForAudio() {
+    this.isSpeakingAudio = true;
+    if (this.recognition) {
+      try {
+        this.recognition.stop();
+      } catch (e) {}
+    }
+  }
+
+  private resumeListeningAfterAudio() {
+    setTimeout(() => {
+      this.isSpeakingAudio = false;
+      if (this.isRunning && this.recognition) {
+        try {
+          this.recognition.start();
+        } catch (e) {}
+      }
+      this.notifyState('listening');
+    }, 400);
   }
 
   private speakBrowserSynthesis(text: string) {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
     try {
+      this.pauseListeningForAudio();
       window.speechSynthesis.resume();
       window.speechSynthesis.cancel();
 
@@ -258,12 +338,12 @@ export class WebSpeechFallbackEngine {
       };
 
       utterance.onend = () => {
-        this.notifyState('listening');
+        this.resumeListeningAfterAudio();
       };
 
       utterance.onerror = (err) => {
         console.warn('SpeechSynthesis utterance notice:', err);
-        this.notifyState('listening');
+        this.resumeListeningAfterAudio();
       };
 
       // Keep utterance reference globally to avoid Chrome garbage collection bug

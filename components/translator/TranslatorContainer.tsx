@@ -132,6 +132,10 @@ export const TranslatorContainer: React.FC = () => {
     setErrorMessage(null);
     const activeDir = overrideDirection || direction;
 
+    if (webspeechFallbackRef.current) {
+      webspeechFallbackRef.current.primeAudio();
+    }
+
     try {
       // 1. Initialize Audio Capture & Processor
       audioProcessorRef.current = new AudioProcessor({
